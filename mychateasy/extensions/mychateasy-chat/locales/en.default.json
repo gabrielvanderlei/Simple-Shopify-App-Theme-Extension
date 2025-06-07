@@ -1,0 +1,28 @@
+{
+  "ai_chat": {
+    "toggle_button": "Open AI Chat Assistant",
+    "header_title": "AI Assistant",
+    "welcome_message": "Hi! I'm your AI assistant. How can I help you today?",
+    "input_placeholder": "Ask me anything about our products...",
+    "send_button": "Send message",
+    "typing_status": "AI is typing...",
+    "error_message": "Sorry, I encountered an error",
+    "error_occurred": "An error occurred while processing your request",
+    "connection_error": "Sorry, I am having trouble connecting right now. Please try again later.",
+    "connection_failed": "Connection failed - please check your internet connection",
+    "not_configured": "AI chat is currently unavailable",
+    "quick_questions": {
+      "header": "Quick Questions",
+      "product_info": "Tell me about this product",
+      "shipping_info": "What are your shipping options?",
+      "return_policy": "What's your return policy?",
+      "size_guide": "Help me choose the right size",
+      "recommendations": "What do you recommend for me?"
+    },
+    "responses": {
+      "thinking": "Let me think about that...",
+      "searching": "Searching our catalog...",
+      "processing": "Processing your request..."
+    }
+  }
+}

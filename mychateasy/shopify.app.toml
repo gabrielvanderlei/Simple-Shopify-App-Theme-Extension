@@ -1,0 +1,36 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "5c06dfa9d3e7485900553a9182126e31"
+name = "mychateasy"
+handle = "mychateasy"
+application_url = "https://fictional-space-giggle-g4749r54w4v2ww7-4040.app.github.dev"
+embedded = true
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2025-04"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,read_orders,read_shopify_payments_payouts"
+
+[auth]
+redirect_urls = [
+  "https://fictional-space-giggle-g4749r54w4v2ww7-4040.app.github.dev/auth/callback",
+  "https://fictional-space-giggle-g4749r54w4v2ww7-4040.app.github.dev/auth/shopify/callback",
+  "https://fictional-space-giggle-g4749r54w4v2ww7-4040.app.github.dev/api/auth/callback"
+]
+
+[pos]
+embedded = false

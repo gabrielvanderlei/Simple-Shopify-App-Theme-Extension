@@ -1,0 +1,176 @@
+{%- liquid
+  assign chat_enabled = block.settings.enabled
+  assign widget_position = block.settings.position
+  assign widget_color = block.settings.primary_color
+  assign widget_size = block.settings.size
+  assign welcome_message = block.settings.welcome_message
+  assign placeholder_text = block.settings.placeholder_text
+-%}
+
+{%- if chat_enabled -%}
+  <div 
+    class="ai-chat-widget" 
+    data-position="{{ widget_position }}"
+    data-color="{{ widget_color }}"
+    data-size="{{ widget_size }}"
+    {{ block.shopify_attributes }}
+  >
+    <!-- Chat Toggle Button -->
+    <button 
+      class="ai-chat-toggle"
+      onclick="toggleAIChat()"
+      style="background-color: {{ widget_color }};"
+      aria-label="{{ 'ai_chat.toggle_button' | t }}"
+    >
+      <svg class="chat-icon" viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+      </svg>
+      <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" style="display: none;">
+        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+      </svg>
+    </button>
+
+    <!-- Chat Window -->
+    <div class="ai-chat-window" id="aiChatWindow" style="display: none;">
+      <!-- Chat Header -->
+      <div class="ai-chat-header" style="background-color: {{ widget_color }};">
+        <h3>{{ 'ai_chat.header_title' | t }}</h3>
+        <button onclick="toggleAIChat()" class="ai-chat-close">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="ai-message">
+          <div class="message-avatar">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+          <div class="message-content">
+            {%- if welcome_message != blank -%}
+                {{ welcome_message }}
+            {%- else -%}
+                {{ 'ai_chat.welcome_message' | t }}
+            {%- endif -%}
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="ai-chat-input">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            id="aiChatInput"
+            placeholder="{{ placeholder_text | default: 'ai_chat.input_placeholder' | t }}"
+            maxlength="500"
+          >
+          <button 
+            onclick="sendAIMessage()" 
+            id="aiChatSend"
+            style="background-color: {{ widget_color }};"
+            disabled
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chat-status" id="aiChatStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Render CSS and JS -->
+  {% render 'ai_chat_styles', color: widget_color, position: widget_position, size: widget_size %}
+  {% render 'ai_chat_scripts', shop_domain: shop.permanent_domain %}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "AI Chat Assistant",
+  "target": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Chat Configuration"
+    },
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable AI Chat",
+      "default": true,
+      "info": "Configure your AI settings in the app admin first"
+    },
+    {
+      "type": "text",
+      "id": "welcome_message",
+      "label": "Welcome Message",
+      "default": "Hi! I'm your AI assistant. How can I help you today?",
+      "info": "First message customers see when opening chat"
+    },
+    {
+      "type": "text", 
+      "id": "placeholder_text",
+      "label": "Input Placeholder",
+      "default": "Ask me anything about our products...",
+      "info": "Placeholder text in the chat input field"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Widget Position",
+      "options": [
+        {
+          "value": "bottom-right",
+          "label": "Bottom Right"
+        },
+        {
+          "value": "bottom-left", 
+          "label": "Bottom Left"
+        },
+        {
+          "value": "bottom-center",
+          "label": "Bottom Center"
+        }
+      ],
+      "default": "bottom-right"
+    },
+    {
+      "type": "select",
+      "id": "size",
+      "label": "Widget Size",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Primary Color",
+      "default": "#007cba",
+      "info": "Main color for chat buttons and header"
+    }
+  ]
+}
+{% endschema %}

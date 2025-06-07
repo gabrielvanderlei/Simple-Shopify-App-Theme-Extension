@@ -1,0 +1,228 @@
+<script>
+  // AI Chat Widget Configuration
+  const AI_CHAT_CONFIG = {
+    shopDomain: '{{ shop_domain }}',
+    apiBaseUrl: window.location.origin,
+    isOpen: false,
+    isTyping: false
+  };
+
+  // Toggle Chat Window
+  function toggleAIChat() {
+    const chatWindow = document.getElementById('aiChatWindow');
+    const toggleButton = document.querySelector('.ai-chat-toggle');
+    const chatIcon = toggleButton.querySelector('.chat-icon');
+    const closeIcon = toggleButton.querySelector('.close-icon');
+    
+    if (AI_CHAT_CONFIG.isOpen) {
+      // Close chat
+      chatWindow.style.display = 'none';
+      chatIcon.style.display = 'block';
+      closeIcon.style.display = 'none';
+      AI_CHAT_CONFIG.isOpen = false;
+    } else {
+      // Open chat
+      chatWindow.style.display = 'block';
+      chatIcon.style.display = 'none';
+      closeIcon.style.display = 'block';
+      AI_CHAT_CONFIG.isOpen = true;
+      
+      // Focus input
+      setTimeout(() => {
+        document.getElementById('aiChatInput').focus();
+      }, 100);
+    }
+  }
+
+  // Send Message
+  async function sendAIMessage() {
+    const input = document.getElementById('aiChatInput');
+    const sendButton = document.getElementById('aiChatSend');
+    const question = input.value.trim();
+    
+    if (!question || AI_CHAT_CONFIG.isTyping) return;
+    
+    // Add user message
+    addMessage(question, 'user');
+    
+    // Clear input and disable button
+    input.value = '';
+    updateSendButton();
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+      // Call the chat API endpoint from our Shopify app
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          question: question,
+          context: {
+            page_url: window.location.href,
+            page_title: document.title,
+            shop_domain: AI_CHAT_CONFIG.shopDomain
+          }
+        })
+      });
+      
+      const data = await response.json();
+      
+      // Hide typing indicator
+      hideTypingIndicator();
+      
+      if (data.success) {
+        // Add AI response
+        addMessage(data.answer, 'ai');
+        updateChatStatus('');
+      } else {
+        // Show error message
+        addMessage(`{{ 'ai_chat.error_message' | t }}: ${data.error}`, 'ai');
+        updateChatStatus('{{ "ai_chat.error_occurred" | t }}');
+      }
+      
+    } catch (error) {
+      console.error('Chat API error:', error);
+      hideTypingIndicator();
+      addMessage('{{ "ai_chat.connection_error" | t }}', 'ai');
+      updateChatStatus('{{ "ai_chat.connection_failed" | t }}');
+    }
+  }
+
+  // Add Message to Chat
+  function addMessage(content, type) {
+    const messagesContainer = document.getElementById('aiChatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = type === 'user' ? 'user-message' : 'ai-message';
+    
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'message-avatar';
+    
+    if (type === 'user') {
+      avatarDiv.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      `;
+    } else {
+      avatarDiv.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      `;
+    }
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // Show Typing Indicator
+  function showTypingIndicator() {
+    const messagesContainer = document.getElementById('aiChatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'ai-message typing-message';
+    typingDiv.innerHTML = `
+      <div class="message-avatar">
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </div>
+      <div class="typing-indicator">
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    `;
+    
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    AI_CHAT_CONFIG.isTyping = true;
+    updateChatStatus('{{ "ai_chat.typing_status" | t }}');
+  }
+
+  // Hide Typing Indicator
+  function hideTypingIndicator() {
+    const typingMessage = document.querySelector('.typing-message');
+    if (typingMessage) {
+      typingMessage.remove();
+    }
+    AI_CHAT_CONFIG.isTyping = false;
+  }
+
+  // Update Send Button State
+  function updateSendButton() {
+    const input = document.getElementById('aiChatInput');
+    const sendButton = document.getElementById('aiChatSend');
+    const hasText = input.value.trim().length > 0;
+    
+    sendButton.disabled = !hasText || AI_CHAT_CONFIG.isTyping;
+  }
+
+  // Update Chat Status
+  function updateChatStatus(message) {
+    const statusElement = document.getElementById('aiChatStatus');
+    if (statusElement) {
+      statusElement.textContent = message;
+    }
+  }
+
+  // Initialize Chat Widget
+  function initAIChat() {
+    const input = document.getElementById('aiChatInput');
+    
+    if (input) {
+      // Handle input events
+      input.addEventListener('input', updateSendButton);
+      
+      // Handle Enter key
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendAIMessage();
+        }
+      });
+      
+      // Initial button state
+      updateSendButton();
+    }
+    
+    // Check if AI is configured
+    checkAIConfiguration();
+  }
+
+  // Check AI Configuration
+  async function checkAIConfiguration() {
+    try {
+      const response = await fetch('/api/config');
+      const data = await response.json();
+      
+      if (!data.success || !data.config.chatEnabled) {
+        updateChatStatus('{{ "ai_chat.not_configured" | t }}');
+        document.getElementById('aiChatInput').disabled = true;
+        document.getElementById('aiChatSend').disabled = true;
+      }
+    } catch (error) {
+      console.warn('Could not check AI configuration:', error);
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', initAIChat);
+
+  // Expose functions globally for inline event handlers
+  window.toggleAIChat = toggleAIChat;
+  window.sendAIMessage = sendAIMessage;
+</script>
